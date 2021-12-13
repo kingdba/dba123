@@ -1,0 +1,109 @@
+Connect as SYSTEM, to the instance where the plan is loaded
+
+
+-- Example
+
+SELECT T0.CNBNNF, T0.CNBSER, T0.CNN001, T0.CNDCT, T0.CNFCO, T0.CNNFEEXTTD,
+T0.CNNFECMDF, T0.CNNFESRDF, T0.CNNFEDEDF, T0.CNNFEMF,
+T0.CNNFERNT, T0.CNNFESTA1, T0.CNNFESTA2, T1.DNBNNF, T1.DNBSER, T1.DNN001,
+...
+
+SQL> @c:\lr\level3_sqlw.sql
+sql_id: 4gcfr38rpn722
+
+                     Plan       First    Last     Last                       User IO                            Buffer     Buffer     Sec
+Act  Parsing    Chld hash       load     load     Active   Elapsed  Cpu      Wait     Crs   Ccy   Pl  App   Jav per        per        per      Buffer     Rows                    Disk
+Inst user       Num  value      time     time     time     Sec      Sec      Sec      Sec   Sec   Sec Sec   Sec Rows       Exec       Exec     gets       Procssed Fetch Exec     reads
+---- ---------- ---- ---------- -------- -------- -------- -------- -------- -------- ----- ----- --- ----- --- ---------- ---------- -------- ---------- -------- ----- -------- --------
+1    JDE           1 1028205658 01-25/13 02-08/23 02-09/09 4812.27  1002.68  4353.66  31.89 .01   0   0     0   14         433239     71.8249  29026992   2097285  77787 67       8217659
+2    JDE           1 1028205658 02-07/18 02-09/01 02-09/09 1566.91  343.55   1373.16  15.6  0     0   0     0   14         433767     27.0157  25158502   1815608  67338 58       2577820
+3    JDE           1 1028205658 02-01/17 02-09/00 02-09/09 3372.46  680.11   3042.3   28.53 0     0   0     0   14         433235     56.2076  25994128   1849022  68579 60       5590861
+
+
+In this case, we can connect to either instance. If only one instance showed the plan we want to fix, then connect to that instance.
+
+SQL> show user
+USER is "SYSTEM"
+
+var pls number
+exec :pls := dbms_spm.load_plans_from_cursor_cache(sql_id => '4gcfr38rpn722', plan_hash_value => 1028205658)
+
+---
+-- SQL> var pls number
+-- SQL> exec :pls := dbms_spm.load_plans_from_cursor_cache(sql_id => '4gcfr38rpn722', plan_hash_value => 1028205658)
+
+-- PL/SQL procedure successfully completed.
+
+---
+
+col signature for a20
+col sql_handle for a20
+col plan_name for a30
+col created for a20
+col enabled for a10
+col accepted for a10
+col fixed for a8
+col reproduced for a10
+ 
+
+with tmp as
+(select exact_matching_signature signature from v$sql where sql_id='4gcfr38rpn722')
+select to_char(a.signature) signature, sql_handle, plan_name, to_char(created,'DD-MON-YYYY hh24:mi') created, enabled, accepted, fixed, reproduced
+from dba_sql_plan_baselines a, tmp
+where a.signature=tmp.signature 
+order by created
+/
+
+SIGNATURE            SQL_HANDLE           PLAN_NAME                      CREATED              ENABLED    ACCEPTED   FIXED    REPRODUCED
+-------------------- -------------------- ------------------------------ -------------------- ---------- ---------- -------- ----------
+7237562984972867253  SQL_6470fd3046d2d6b5 SQL_PLAN_68w7x613d5ppp31098aa9 09-FEB-2017 09:53    YES        YES        NO       YES
+
+
+Check if reproduced.
+
+At this time Baseline should have already kicked in. Yet we are going to change the name to our standard and fix
+
+--Make sure to use the right handle and plan
+
+declare
+custom_plan pls_integer;
+begin
+custom_plan := dbms_spm.alter_sql_plan_baseline(
+    sql_handle=> 'SQL_6470fd3046d2d6b5',
+    plan_name=>'SQL_PLAN_68w7x613d5ppp31098aa9',
+    attribute_name=>'PLAN_NAME',
+    attribute_value=>'SQL_PLAN_MANUAL_4gcfr38rpn722');
+end;
+/
+
+
+--Use the name changed above
+
+declare
+custom_plan pls_integer;
+begin
+custom_plan := dbms_spm.alter_sql_plan_baseline(
+    sql_handle=> 'SQL_6470fd3046d2d6b5',
+    plan_name=>'SQL_PLAN_MANUAL_4gcfr38rpn722',
+    attribute_name=>'FIXED',
+    attribute_value=>'YES');
+end;
+/
+
+
+SIGNATURE            SQL_HANDLE           PLAN_NAME                      CREATED              ENABLED    ACCEPTED   FIXED    REPRODUCED
+-------------------- -------------------- ------------------------------ -------------------- ---------- ---------- -------- ----------
+7237562984972867253  SQL_6470fd3046d2d6b5 SQL_PLAN_MANUAL_4gcfr38rpn722  09-FEB-2017 09:53    YES        YES        YES      YES
+
+Now we can explain plan or check the SQL
+
+
+...
+
+Note
+-----
+   - SQL plan baseline SQL_PLAN_MANUAL_4gcfr38rpn722 used for this statement
+
+
+
+ 
