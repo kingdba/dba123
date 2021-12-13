@@ -1,0 +1,162 @@
+SQL> show user
+USER is "SYSTEM"
+
+First check different plans to get the one you need:
+
+Example
+
+select sql_id, plan_hash_value, max(snap_id)
+from dba_hist_sqlstat
+where sql_id='d1zxv25hphcm6'
+group by sql_id, plan_hash_value
+
+
+SQL_ID                        PLAN_HASH_VALUE                    MAX(SNAP_ID)
+------------- ------------------------------- -------------------------------
+b77ym5r0dh19v                      2562353443                            2958
+b77ym5r0dh19v                      3800998729                            2948 <-- we want this
+
+
+-----
+In your database it would be:
+
+SQL> select sql_id, plan_hash_value, max(snap_id)
+  2  from dba_hist_sqlstat
+  3  where sql_id='d1zxv25hphcm6'
+  4  group by sql_id, plan_hash_value
+  5  ;
+
+SQL_ID                        PLAN_HASH_VALUE                    MAX(SNAP_ID)
+------------- ------------------------------- -------------------------------
+d1zxv25hphcm6                      3918563925                            5755
+d1zxv25hphcm6                       225862460                            5571
+
+------
+
+Then check sqlset is not already there
+
+select owner, name
+from dba_sqlset
+where owner = 'SYSTEM';
+
+--if it exists but old or no one claims it, then drop
+
+exec dbms_sqltune.drop_sqlset('STS_SYSTEM');
+
+else use a different name
+
+--Then create sqlset
+
+begin
+dbms_sqltune.create_sqlset(sqlset_name => 'STS_SYSTEM', sqlset_owner =>'SYSTEM'); 
+end; 
+/
+
+-- Then populate sql set, use sqq_id and snap you identified -1 for begin snap and end snap can be next snap (if existing),
+or any range in which plan you need exists
+
+declare
+  cur sys_refcursor;
+begin
+  open cur for
+    select value(a)
+    from table(dbms_sqltune.select_workload_repository(begin_snap=>2947, end_snap=>2949,basic_filter=>'sql_id = ''b77ym5r0dh19v''',attribute_list=>'ALL')) a;
+    dbms_sqltune.load_sqlset(sqlset_name=> 'STS_SYSTEM', populate_cursor=>cur);
+  close cur;
+end;
+/
+
+
+-- Check loaded
+
+select sql_id, plan_hash_value
+from table(dbms_sqltune.select_sqlset(sqlset_name => 'STS_SYSTEM'));
+
+
+SQL> select sql_id, plan_hash_value
+  2  from table(dbms_sqltune.select_sqlset(sqlset_name => 'STS_SYSTEM'));
+
+SQL_ID                        PLAN_HASH_VALUE
+------------- -------------------------------
+b77ym5r0dh19v                      3800998729
+
+ 
+select * FROM dba_sql_plan_baselines ;
+ 
+--create baseline
+
+declare
+custom_plan pls_integer;
+begin
+  custom_plan := dbms_spm.load_plans_from_sqlset(sqlset_name => 'STS_SYSTEM',basic_filter=>'plan_hash_value = ''3800998729''');
+end;
+/
+
+-- check baseline
+ 
+col signature for a20
+col sql_handle for a20
+col plan_name for a30
+col created for a20
+col enabled for a10
+col accepted for a10
+col fixed for a8
+col reproduced for a10
+ 
+
+with tmp as
+(select exact_matching_signature signature from v$sql where sql_id='b77ym5r0dh19v')
+select to_char(a.signature) signature, sql_handle, plan_name, to_char(created,'DD-MON-YYYY hh24:mi') created, enabled, accepted, fixed, reproduced
+from dba_sql_plan_baselines a, tmp
+where a.signature=tmp.signature 
+order by created
+/
+
+
+--rename to standard
+
+declare
+custom_plan pls_integer;
+begin
+custom_plan := dbms_spm.alter_sql_plan_baseline(
+    sql_handle=> 'SQL_5f3a6ad5368eba35',
+    plan_name=>'SQL_PLAN_5yfmaunv8xfjp973d8f96',
+    attribute_name=>'PLAN_NAME',
+    attribute_value=>'SQL_PLAN_MANUAL_b77ym5r0dh19v');
+end;
+/
+
+Set it to FIXED
+
+declare
+custom_plan pls_integer;
+begin
+custom_plan := dbms_spm.alter_sql_plan_baseline(
+    sql_handle=> 'SQL_5f3a6ad5368eba35',
+    plan_name=>'SQL_PLAN_MANUAL_b77ym5r0dh19v', --might have to use all uppercase
+    attribute_name=>'FIXED',
+    attribute_value=>'YES');
+end;
+/
+
+Then explain plan the SQL or check for "active" plan
+
+...
+
+Note
+-----
+   - SQL plan baseline "SQL_PLAN_MANUAL_B77YM5R0DH19V" used for this statement
+
+
+-- drop STS
+
+exec dbms_sqltune.drop_sqlset('STS_SYSTEM');
+
+-- If you need to drop the outline
+
+declare
+custom_plan pls_integer;
+begin
+  custom_plan := dbms_spm.drop_sql_plan_baseline( sql_handle=> 'SQL_5f3a6ad5368eba35', plan_name=> 'SQL_PLAN_MANUAL_B77YM5R0DH19V');
+end;
+/
