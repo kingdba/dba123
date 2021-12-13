@@ -1,0 +1,104 @@
+Level 1 = Host (OEM Repository)			
+Level 2 = Multiple Databases (OEM Repository)
+Level 3 = Single Database (Database)
+
+NOTE: 	For capacity and trending focus on AVG values, but keep MAX values in mind. 
+	For punctual short-term performance issues focus on MAX values	
+	Use Level 3 for database information and real time performance optimization
+
+Script			Level	Description
+------------		-----	------------
+level1_exaio.sql	1	Exadata Storage Cells current status & Metrics
+
+level1_exaio_d.sql	1	Exadata "days in past" based Storage Cells Metrics
+level1_exaio_dr.sql	1	Exadata range based daily Storage Cells Metrics
+level1_exaio_h.sql	1	Hourly Storage Cells Metrics for a given day
+
+level2_exaio_dbm.sql	2	Range based Monthly metrics for exadata storage per database
+level2_exaio_dbd.sql	2	Range based Daily metrics for exadata storage per database
+level2_exaio_dbh.sql	2	Hourly metrics for exadata storage, per database for a given day
+level2_exaio_dbc.sql	2	Current hourly metrics for exadata storage per database
+
+level1y.sql		1	Host utilization metrics. Last 12 months.
+level1m.sql		1	Monthly Host utilization metrics with Range
+level1c.sql		1	Host utilization metrics for current day
+level1d.sql		1	Daily Host utilization metrics for a given month
+level1h.sql		1 	Hourly Host utilization metrics for a given day
+
+level2_cpuy.sql		2	Estimated CPU cores per database. Last 12 months
+level2_cpum.sql		2 	Estimated CPU cores per database. Monthly, range based
+level2_cpum_db.sql	2 	Estimated CPU cores for single database. Monthly, range based
+level2_cpud.sql		2	Estimated CPU cores per database. Daily for a given Month
+level2_cpud_db.sql	2	Estimated CPU cores for a single database. Daily for a given Month
+level2_cpuh.sql		2	Estimated CPU cores per database. Hourly for a given Day
+level2_cpuh_db.sql	2	Estimated CPU cores for a single database. Hourly for a given Day
+level2_cpuc.sql		2	Estimated CPU cores per database. Current values
+level2_cpuc_db.sql	2	Estimated CPU cores for a given database. Current values
+
+level2_dby.sql		2	DB Time & Wait events per database. Last 12 months.
+level2_dbm.sql		2	DB Time & Wait events per database. Monthly, range based
+level2_dbm_db.sql	2	DB Time & Wait events for a single database. Monthly, range based	
+level2_dbd.sql		2 	DB Time & Wait events per database. Daily for a given Month
+level2_dbd_db.sql	2	DB Time & Wait events for a single database. Daily for a given Month
+level2_dbha.sql		2	DB Time & Wait events per database. Hourly for a given Day
+level2_dbh_db.sql	2	DB Time & Wait events for a single database. Hourly for a given Day
+level2_dbc.sql		2	DB Time & Wait events per database. Current values
+level2_cpuc_db.sql	2	DB Time & Wait events for a single database. Current values
+
+level2_ioy.sql		2 	DB IO per database. Last 12 months.
+level2_iom.sql		2	DB IO per database. Monthly, range based
+level2_iom_db.sql	2	DB IO for a single database. Monthly, range based
+level2_ioh.sql		2 	DB IO per database. Hourly for a given Day
+level2_ioh_db.sql	2	DB IO for a single database. Hourly for a given Day
+level2_iod.sql		2 	DB IO per database. Daily for a given Month
+level2_iod_db.sql	2	DB IO for a single database. Daily for a given Month
+level2_ioc.sql		2 	DB IO per database. Current values
+level2_ioc_db.sql	2	DB IO for a single database. Current values
+
+level2_memy.sql		1 	Db Size & Mem footprint. Last 12 months.
+level2_memd.sql		2	Db Size & Mem footprint. Daily for a given Month
+level2_memd_db.sql	2 	Db Size & Mem footprint for single database. Daily for a given Month
+level2_memm.sql		2	Db Size & Mem footprint. Monthly, range based
+level2_memm_db.sql	2	Db Size & Mem footprint for single database. Monthly, range based
+
+level3_addm.sql		3	List ADDM top findings
+level3_alocks.sql	3	List Database Actual Locks (if any) 
+level3_bkpstat.sql	3	List of Database Backups
+level3_db.sql		3	ASH based DB Time & Wait events. Daily
+level3_dbh.sql		3	ASH based DB Time & Wait events. Hourly
+level3_e.sql		3	Hist_system_event based, wait history. Daily
+level3_ed.sql		3	Hist_system_event based, wait history. Hourly for a given day	
+level3_ash_e.sql	3	ASH based wait event history details
+level3_exaflash.sql	3	Exadata estimated Flash efficiency
+level3_histdet.sql	3	Histogram Details for a given table
+level3_hparam.sql	3	AWR parameter change history
+level3_seg_rm.sql	3	Segments that may benefit from rebuilt/move
+level3_sgahist.sql	3	AWR SGA main pools history
+level3_sql.sql		3	AWR History for a given sql_id
+level3_sql_ms.sql	3 	AWR History for a given sql_id, lists all SQLs matching signature (use for SQLs that use literal values)
+level3_sqlash.sql	3	ASH plan details for a given sql_id
+level3_plan.sql		3	Display Loaded execution plans for a given sql_id
+level3_plancomp.sql	3	Compare performance of execution plans. Resource Intensive! Use only when creating manual baselines/profiles. Else use level3_sql.sql
+level3_rowhist.sql	3	Stats based row history for a table
+level3_rwt.sql		3	Estimated "days in past" based Read/Write times for a given tablespace. 
+level3_tst.sql		3	Top Read Tablespaces since last startup 
+level3_s.sql		3	Hist Sysstat based, wait history. Daily
+level3_sd.sql		3 	Hist Sysstat based, wait history. Hourly for a given day	
+level3_sqlbinds.sql	3	AWR bind history for a given sql_id
+level3_sqlw.sql		3	SQL Workload for a given SQL
+level3_stats.sql	3	Database & AWR configuration Checks
+level3_tcpu11g.sql	3	Top CPU SQLs
+level3_tr11g.sql	3	Top Readers SQLs
+level3_tw11g.sql	3	Top Writers SQLs
+level3_wash.sql		3	ASH Daily CPU+Wait Class samples
+level3_wcl.sql		3	ASH events in Wait Class for a given day
+level3_whatwaits_r.sql	3	Eeventmetric based, real time waits
+level3_sqlc_d.sql	3	SQL_ID counts. Daily
+level3_sqlc_h.sql	3	SQL_ID counts. Hourly for a given day	
+level3_sqlc_md.sql	3	SQL Matching Signature counts. Daily
+level3_sqlc_mh.sql	3	SQL Matching Signature counts. Hourly for a given day	
+
+
+
+ 
+	
